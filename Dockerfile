@@ -1,25 +1,19 @@
-FROM ubuntu:24.04
+FROM python:3.12-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
 
-# Instalar dependências do sistema
-RUN apt update && \
-    apt install -y python3 python3-pip python3-venv build-essential && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Criar ambiente virtual
-RUN python3 -m venv /opt/venv
-
-# Ativar ambiente virtual através do PATH
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Copiar e instalar dependências Python
+# Copiar requirements e instalar dependências
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código da aplicação
 COPY . .
 
+# Criar diretório público se não existir
+RUN mkdir -p public
+
+# Expor a porta que o Render usa
+EXPOSE 10000
+
 # Comando de execução
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "app:app"]

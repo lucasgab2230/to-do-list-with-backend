@@ -4,8 +4,8 @@ import os
 
 app = Flask(__name__, static_folder='public')
 
-# Database file path
-DATABASE = 'tasks.db'
+# Database file path - usar caminho relativo ou ambiente
+DATABASE = os.environ.get('DATABASE_URL', 'tasks.db') if os.environ.get('DATABASE_URL') else 'tasks.db'
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -13,16 +13,15 @@ def get_db_connection():
     return conn
 
 def init_db():
-    if not os.path.exists(DATABASE):
-        conn = get_db_connection()
-        conn.execute('''
-            CREATE TABLE tasks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                task TEXT NOT NULL
-            )
-        ''')
-        conn.commit()
-        conn.close()
+    conn = get_db_connection()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
 @app.route('/')
 def index():
@@ -70,4 +69,6 @@ def delete_task(task_id):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    # Usar porta definida pelo Render ou 10000 como padrão
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port, debug=False)
