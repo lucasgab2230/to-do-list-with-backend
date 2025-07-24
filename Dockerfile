@@ -1,29 +1,25 @@
-# Use Ubuntu 24.04 LTS base image
 FROM ubuntu:24.04
 
-# Set working directory
-WORKDIR /app
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Python 3.12 and pip
-RUN apt-get update && \
-    apt-get install -y python3.12 python3-pip sqlite3 && \
-    apt-get clean && \
+# Instalar dependências do sistema
+RUN apt update && \
+    apt install -y python3 python3-pip python3-venv build-essential && \
+    apt clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set default Python version
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+# Criar ambiente virtual
+RUN python3 -m venv /opt/venv
 
-# Copy requirements file
+# Ativar ambiente virtual através do PATH
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copiar e instalar dependências Python
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# Copy application code
+# Copiar código da aplicação
 COPY . .
 
-# Expose port 5000 (default Flask port)
-EXPOSE 5000
-
-# Run the application
-CMD ["python3", "app.py"]
+# Comando de execução
+CMD ["python", "app.py"]
